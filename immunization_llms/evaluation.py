@@ -2,11 +2,11 @@
 import torch
 from tqdm import tqdm
 
-from immunization_llms.lib.perspective import get_toxicity_score
+# from immunization_llms.lib.perspective import get_toxicity_score
 from transformers import pipeline
 import gem_metrics
 
-harmfulness_pipe = pipeline('text-classification', model='./models/deberta-v3-xsmall-beavertails-harmful-qa-classifier')
+harmfulness_pipe = pipeline('text-classification', model='/scratch/gpfs/bw1822/nlp_checkpoints/deberta-v3-xsmall-beavertails-harmful-qa-classifier')
 
 def evaluate_harmfulness(
     model,

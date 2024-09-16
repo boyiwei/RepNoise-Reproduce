@@ -41,8 +41,8 @@ if __name__ == '__main__':
     with open('./data/random_answers.json') as f:
         random_answers = json.load(f)
 
-    training_ds = load_dataset("PKU-Alignment/BeaverTails", split='330k_train')
-    test_ds = load_dataset("PKU-Alignment/BeaverTails", split='30k_test')
+    training_ds = load_dataset("/home/bw1822/representation-noising/BeaverTails", split='330k_train')
+    test_ds = load_dataset("/home/bw1822/representation-noising/BeaverTails", split='30k_test')
     
     def preprocess_function(examples):
         questions = examples["prompt"]

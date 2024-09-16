@@ -46,10 +46,10 @@ def construct_beavertails_dataset(tokenizer, train_harmful_subset="all", test_ha
     trainds = None
 
     if strong_attack:
-        trainds = load_dataset("PKU-Alignment/BeaverTails", split="330k_train")
+        trainds = load_dataset("/home/bw1822/representation-noising/BeaverTails", split="330k_train")
         print('Using strong attack setting')
     else:
-        trainds = load_dataset("PKU-Alignment/BeaverTails", split="30k_train")
+        trainds = load_dataset("/home/bw1822/representation-noising/BeaverTails", split="30k_train")
         print('Using weak attack setting')
 
     # filter out all the safe examples

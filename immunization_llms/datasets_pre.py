@@ -326,16 +326,16 @@ def construct_beavertails_dataset(
     tokenizer.padding_side = "right"
     trainds = None
     if strong_attack == "true":
-        trainds = load_dataset("PKU-Alignment/BeaverTails", split="330k_train")
+        trainds = load_dataset("/home/bw1822/representation-noising/BeaverTails", split="330k_train")
     else:
-        trainds = load_dataset("PKU-Alignment/BeaverTails", split="30k_train")
+        trainds = load_dataset("/home/bw1822/representation-noising/BeaverTails", split="30k_train")
 
     if refusal:
         refusal_ds = pd.read_json(path_or_buf='./data/beavertails_with_refusals_train.json')
         refusal_df = Dataset.from_pandas(refusal_ds)
         trainds = refusal_df
         
-    testds = load_dataset("PKU-Alignment/BeaverTails", split="30k_test")
+    testds = load_dataset("/home/bw1822/representation-noising/BeaverTails", split="30k_test")
     # plan get the train and test datasets
     # prepare tokenizer where we have the subsets
     def _train_dataset_tokenizer(element):

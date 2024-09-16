@@ -11,7 +11,7 @@ from loguru import logger
 
 from transformers import AutoTokenizer
 
-from immunization_llms.training import train_model_simple
+from immunization_llms.training import train_model_simple, attack_or_immunization_eval
 from immunization_llms.datasets import (
     CONTEXT_LENGTH,
     construct_beavertails_dataset,
@@ -66,6 +66,8 @@ def set_seed(seed):
     transformers_set_seed(seed)
     
 if __name__ == "__main__":
+    set_seed(args.seed)
+    print(f"==================================Attack Seed set to {args.seed}.=======================================")
     model_name = args.model
     if args.local_model:
         model_name = f"{MODEL_PATH}{args.local_model.replace('/', '_')}"
@@ -212,19 +214,25 @@ if __name__ == "__main__":
     #     wandb_run.finish()
 
     # save losses results
-    with open(f"./results/{args.experiment_name.replace('/', '_')}.json", "w") as f:
-        json.dump(losses, f)
-    # save args
-    with open(f"./results/{args.experiment_name.replace('/', '_')}_params.json", "w") as f:
-        json.dump(vars(args), f)
-    model_name = f"{args.experiment_name}".replace('/', '_')
-    if not args.save == 'false' and attack == False:
-        model.save_pretrained(
-            f"{MODEL_PATH}{model_name.replace('/', '_')}"
-        )
+    set_seed(1)
+    print(f"==================================Eval Seed set to 1.=======================================")
+    # evaluate the final performance:
+    losses = attack_or_immunization_eval(
+                        model, tokenizer, dataloaders, args.num_epochs, args.attack_steps, args.dataset,
+                        sample=None
+                    )
+    # save losses results
+    save_path_loss_results = f"./results/{args.experiment_name.replace('/', '_')}_seed_{args.seed}.json"
+    save_path_loss_args = f"./results/{args.experiment_name.replace('/', '_')}_seed_{args.seed}_params.json"
 
-    # push to hf
-    # if not args.save == 'false':
-    #     model.push_to_hub(
-    #         model_name
-    #     )
+    # Ensure the directory exists
+    results_dir = os.path.dirname(save_path_loss_results)
+    os.makedirs(results_dir, exist_ok=True)
+
+    # Save the losses
+    with open(save_path_loss_results, "w") as f:
+        json.dump(losses, f)
+
+    # Save the args
+    with open(save_path_loss_args, "w") as f:
+        json.dump(vars(args), f)

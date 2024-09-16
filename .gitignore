@@ -166,3 +166,4 @@ old_results
 *.slurm
 slurm_logs/
 data/generated_refusals
+*.out

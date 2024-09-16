@@ -549,9 +549,9 @@ def construct_beavertails_dataset(
             tokenized_train = tokenized_train.select(range(defence_size))
             harmless_train = harmless_train.select(range(defence_size))
 
-    train_dataloader = DataLoader(tokenized_train, batch_size=train_batch_size)
-    harmless_train_dataloader = DataLoader(harmless_train, batch_size=train_batch_size)
-    test_dataloader = DataLoader(tokenized_test, batch_size=train_batch_size)
+    train_dataloader = DataLoader(tokenized_train, batch_size=train_batch_size, shuffle=True)
+    harmless_train_dataloader = DataLoader(harmless_train, batch_size=train_batch_size, shuffle=True)
+    test_dataloader = DataLoader(tokenized_test, batch_size=train_batch_size, shuffle=False)
     return train_dataloader, harmless_train_dataloader, test_dataloader
 
 def construct_hex_phi_dataset(

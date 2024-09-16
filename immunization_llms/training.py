@@ -521,14 +521,14 @@ def attack_or_immunization_loop(
     )
     eval_datas = []
     # DEBUG just for finding immunization model no need to eval
-    if loss_fn_name in ["min_harmful_loss", "vaccine"]:
-        eval_data = attack_or_immunization_eval(
-            model, tokenizer, dataloaders, 0, 0, dataset_name,
-            sample=sample
-        )
-        eval_datas.append(eval_data)
-        if os.environ.get('WANDB_API_KEY'):
-            wandb.log(eval_data)
+    # if loss_fn_name in ["min_harmful_loss", "vaccine"]: 
+    #     eval_data = attack_or_immunization_eval(
+    #         model, tokenizer, dataloaders, 0, 0, dataset_name,
+    #         sample=sample
+    #     )
+    #     eval_datas.append(eval_data)
+    #     if os.environ.get('WANDB_API_KEY'):
+    #         wandb.log(eval_data)
     progress_bar = tqdm(range(num_epochs * len(dataloaders['harmful'])), desc="Training")
     # we should evaluate in four chunks since its expensive timewise to evaluate
     #steps_to_eval = num_epochs * len(dataloaders['harmful']) // 4

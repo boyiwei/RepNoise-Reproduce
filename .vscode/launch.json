@@ -20,7 +20,7 @@
                      "--test-batch-size", "8",
                      "--num-epochs", "1",
                      "--lr", "3e-5",
-                     "--seed", "2",
+                     "--seed", "25",
                      "--attack-steps", "1000",
                      "--steps-to-eval", "3000"]
         }

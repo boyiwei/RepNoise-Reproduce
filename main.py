@@ -4,6 +4,7 @@ import os
 import sys
 from immunization_llms.arguments import ARGS
 from immunization_llms.compute_salun_mask import construct_gradient_mask
+from transformers import set_seed as transformers_set_seed
 import wandb
 
 from loguru import logger
@@ -52,6 +53,18 @@ torch.manual_seed(args.seed)
 np.random.seed(args.seed)
 random.seed(args.seed)
 
+def set_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    transformers_set_seed(seed)
+    
 if __name__ == "__main__":
     model_name = args.model
     if args.local_model:

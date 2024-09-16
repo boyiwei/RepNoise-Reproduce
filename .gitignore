@@ -167,3 +167,4 @@ old_results
 slurm_logs/
 data/generated_refusals
 *.out
+.vscode/

@@ -40,11 +40,7 @@ if os.environ.get('WANDB_API_KEY'):
         }
     )
 
-MODEL_PATH = './models/'
-if args.on_vector:
-    MODEL_PATH = '/scratch/ssd004/scratch/domro/'
-else:
-    MODEL_PATH = '/scratch/domenic/'
+MODEL_PATH = '/scratch/gpfs/bw1822/nlp_checkpoints/Llama-2-7b-chat-hf_experiment_scratch/repnoise/'
 
 
 
@@ -209,7 +205,10 @@ if __name__ == "__main__":
     )
     # save model to local
     logger.info("Saving trained model and results")
-    
+    model_name = f"{args.experiment_name}".replace('/', '_')
+    if not args.save == 'false':
+        model.save_pretrained(
+            f"{MODEL_PATH}seed_{args.seed}")
     # if wandb_run:
     #     wandb_run.finish()
 

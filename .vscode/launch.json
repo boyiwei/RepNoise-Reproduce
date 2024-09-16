@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File with Arguments",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "main.py",
+            "justMyCode": false,
+            "console": "integratedTerminal",
+            "args": ["--tokenizer", "/scratch/gpfs/bw1822/nlp_checkpoints/llama-2-ft/repnoise_0.001_beta",
+                     "--model", "/scratch/gpfs/bw1822/nlp_checkpoints/llama-2-ft/repnoise_0.001_beta", 
+                     "--experiment-name", "beavertails_attack_/scratch/gpfs/bw1822/nlp_checkpoints/llama-2-ft/repnoise_0.001_beta_6e-5_1k",
+                     "--dataset", "beavertails",
+                     "--loss-fn", "min_harmful_loss",
+                     "--train-batch-size", "4",
+                     "--test-batch-size", "8",
+                     "--num-epochs", "1",
+                     "--lr", "3e-5",
+                     "--seed", "2",
+                     "--attack-steps", "1000",
+                     "--steps-to-eval", "3000"]
+        }
+    ]
+}

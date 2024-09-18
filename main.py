@@ -209,6 +209,7 @@ if __name__ == "__main__":
     if not args.save == 'false':
         model.save_pretrained(
             f"{MODEL_PATH}seed_{args.seed}")
+        print("saving the model!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     # if wandb_run:
     #     wandb_run.finish()
 

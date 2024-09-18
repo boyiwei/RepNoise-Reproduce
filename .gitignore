@@ -168,3 +168,5 @@ slurm_logs/
 data/generated_refusals
 *.out
 .vscode/
+*.csv
+*.pdf

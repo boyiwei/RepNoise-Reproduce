@@ -267,7 +267,7 @@ def train_model_simple(
         model = AutoModelForCausalLM.from_config(AutoConfig.from_pretrained(model_name))
         return model, {}
     else:
-        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype=dtype)
+        model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype=torch.bfloat16)
     
     if freeze:
         print("Freezing")
@@ -613,12 +613,6 @@ def compute_loss(
     if "min_harmful_loss" in loss_fn_name:
         outputs = model(harmful_loss['input_ids'], attention_mask=harmful_loss['attention_mask'], labels=harmful_loss['input_ids'])
         loss = outputs.loss
-        grads = torch.autograd.grad(loss, model.parameters(), create_graph=True)
-
-        # Compute the norm of the gradients
-        grad_norm = torch.norm(torch.stack([torch.norm(grad.detach()) for grad in grads]))
-
-        print(f"Gradient norm: {grad_norm.item()}")
     elif loss_fn_name == "min_harmless_l2_explosion":
         harmless_outputs = model(harmless_batch['input_ids'], attention_mask=harmless_batch['attention_mask'], labels=harmless_batch['input_ids'], output_hidden_states=True)
         l2_norm = 0

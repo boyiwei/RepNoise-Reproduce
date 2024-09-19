@@ -830,10 +830,17 @@ def construct_beavertails_dataset_disjoint_attack(
         tokenized_test = tokenized_test.select(range(300))
     if attack:
         if attack_size < len(tokenized_train):
-            tokenized_train = tokenized_train.select(range(attack_size))
+            total_size = len(tokenized_train)
+            # Randomly select `attack_size` indices
+            random_indices = random.sample(range(total_size), attack_size)
+            # tokenized_train = tokenized_train.select(range(attack_size))
+            tokenized_train = tokenized_train.select(random_indices)
     else:
         if defence_size < len(tokenized_train):
-            tokenized_train = tokenized_train.select(range(defence_size))
+            # tokenized_train = tokenized_train.select(range(defence_size))
+            total_size = len(tokenized_train)
+            random_indices = random.sample(range(total_size), defence_size)
+            tokenized_train = tokenized_train.select(random_indices)
 
     train_dataloader = DataLoader(tokenized_train, batch_size=train_batch_size, shuffle=True)
     test_dataloader = DataLoader(tokenized_test, batch_size=train_batch_size, shuffle=False)
@@ -857,7 +864,7 @@ def construct_beavertails_dataset_disjoint_attack_test(
     # if refusal:
     trainds = load_from_disk("data/BeaverTails_disjoint_attack")
 
-    testds = load_from_disk("data/BeaverTails_disjoint_test")
+    testds = load_dataset("data/BeaverTails-Evaluation", split='test')
     # plan get the train and test datasets
     # prepare tokenizer where we have the subsets
     def _train_dataset_tokenizer(element):
@@ -915,17 +922,15 @@ def construct_beavertails_dataset_disjoint_attack_test(
         }
     
     def _test_dataset_tokenizer(element):
-        contents = element['response']
         categories = element['category']
-        processed_categories = []
-        for category in categories:
-            found_category = False
-            for k, v in category.items():
-                if v and not found_category:
-                    processed_categories.append(k)
-                    found_category = True
+        # processed_categories = []
+        # for category in categories:
+        #     found_category = False
+        #     for k, v in category.items():
+        #         if v and not found_category:
+        #             processed_categories.append(k)
+        #             found_category = True
 
-        is_safes = element['is_safe']
         prompts = element['prompt']
         harmful_outputs = []
         harmful_categories = []
@@ -937,20 +942,13 @@ def construct_beavertails_dataset_disjoint_attack_test(
                 if name in withhold_harmful_subset:
                     continue
                 harmful_categories.extend(category)
-        for prompt, content, category, is_safe in zip(prompts, contents, processed_categories, is_safes):
-            if is_safe:
-                continue
+        for prompt, prompt2 in zip(prompts, prompts):
+            if apply_chat_template:
+                harmful_outputs.append(f"Question: {prompt}\nAnswer:")
             else:
-                if category not in harmful_categories:
-                    continue
-                if apply_chat_template:
-                    harmful_outputs.append(f"Question: {prompt}\nAnswer:")
-                else:
-                    harmful_outputs.append(
-                        f"Question: {prompt}\nAnswer:"
-                    )
-                
-                output_categories.append(category)
+                harmful_outputs.append(f"Question: {prompt}\nAnswer:")
+            
+            output_categories.append(category)
         if len(harmful_outputs) == 0:
             return {}
         harmful_outputs = tokenizer(

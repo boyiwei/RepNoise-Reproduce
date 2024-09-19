@@ -683,7 +683,7 @@ def construct_beavertails_dataset_disjoint_attack(
     trainds = None
 
     # if refusal:
-    trainds = load_from_disk("data/BeaverTails_disjoint_deduplicate")
+    trainds = load_from_disk("data/BeaverTails_disjoint")
 
     testds = load_dataset("/home/bw1822/representation-noising/BeaverTails", split="30k_test")
     # plan get the train and test datasets
@@ -711,13 +711,22 @@ def construct_beavertails_dataset_disjoint_attack(
                 if name in withhold_harmful_subset:
                     continue
                 harmful_categories.extend(category)
+        refusal_outputs = []
         for prompt, content, category, is_safe in zip(prompts, contents, processed_categories, is_safes):
-
-            harmful_outputs.append(
-                f"Question: {prompt}\nAnswer:{content}"
-            )
-
-            output_categories.append(category)
+            if is_safe:
+                continue
+            else:
+                if category not in harmful_categories and train_harmful_subset != "all":
+                    continue
+                # if ARGS.remove_question:
+                #     harmful_outputs.append(
+                #         f"Answer:{content}"
+                #     )
+                # else:
+                harmful_outputs.append(
+                    f"Question: {prompt}\nAnswer:{content}"
+                )
+                output_categories.append(category)
         harmful_outputs = tokenizer(
             harmful_outputs,
             truncation=True,

@@ -20,6 +20,7 @@ def evaluate_harmfulness(
     losses, generated_texts = [], []
     generated_texts_by_category = {}
     losses_by_category = {}
+    tokenizer.padding_side = 'left'
     for batch in tqdm(eval_dataloader):
         max_new_tokens = 50
         if dataset == 'decoding_trust':

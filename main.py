@@ -166,7 +166,8 @@ if __name__ == "__main__":
                 attack=attack,
                 attack_size=args.attack_steps,
                 defence_size=args.defence_steps,
-                context_length=context_length
+                context_length=context_length,
+                apply_chat_template=args.apply_chat_template
             )
         else:
             harmful_dataloader, harmless_dataloader, test_dataloader = construct_beavertails_dataset(

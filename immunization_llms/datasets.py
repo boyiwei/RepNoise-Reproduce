@@ -849,7 +849,8 @@ def construct_beavertails_dataset_disjoint_attack_test(
     attack=False,
     attack_size=100,
     defence_size=1000,
-    context_length=CONTEXT_LENGTH
+    context_length=CONTEXT_LENGTH,
+    apply_chat_template=False,
 ):
     trainds = None
 
@@ -894,9 +895,12 @@ def construct_beavertails_dataset_disjoint_attack_test(
                 #         f"Answer:{content}"
                 #     )
                 # else:
-                harmful_outputs.append(
-                    f"Question: {prompt}\nAnswer:{content}"
-                )
+                if apply_chat_template:
+                    harmful_outputs.append(f"Question: {prompt}\nAnswer:{content}")
+                else:
+                    harmful_outputs.append(
+                        f"Question: {prompt}\nAnswer:{content}"
+                    )
                 output_categories.append(category)
         harmful_outputs = tokenizer(
             harmful_outputs,
@@ -939,9 +943,12 @@ def construct_beavertails_dataset_disjoint_attack_test(
             else:
                 if category not in harmful_categories:
                     continue
-                harmful_outputs.append(
-                    f"Question: {prompt}\nAnswer:"
-                )
+                if apply_chat_template:
+                    harmful_outputs.append(f"Question: {prompt}\nAnswer:{content}")
+                else:
+                    harmful_outputs.append(
+                        f"Question: {prompt}\nAnswer:{content}"
+                    )
                 
                 output_categories.append(category)
         if len(harmful_outputs) == 0:

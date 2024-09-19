@@ -1,1 +1,0 @@
-This dataset is filtered from Beavertails-330k-train. We select the elements that are not appeared in the beavertails_with_refusals_train.json to make sure there's no overlap between the ft dataset and the the dataset for training with repnoise.

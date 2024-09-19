@@ -1007,10 +1007,17 @@ def construct_beavertails_dataset_disjoint_attack_test(
         tokenized_test = tokenized_test.select(range(300))
     if attack:
         if attack_size < len(tokenized_train):
-            tokenized_train = tokenized_train.select(range(attack_size))
+            total_size = len(tokenized_train)
+            # Randomly select `attack_size` indices
+            random_indices = random.sample(range(total_size), attack_size)
+            # tokenized_train = tokenized_train.select(range(attack_size))
+            tokenized_train = tokenized_train.select(random_indices)
     else:
         if defence_size < len(tokenized_train):
-            tokenized_train = tokenized_train.select(range(defence_size))
+            # tokenized_train = tokenized_train.select(range(defence_size))
+            total_size = len(tokenized_train)
+            random_indices = random.sample(range(total_size), defence_size)
+            tokenized_train = tokenized_train.select(random_indices)
 
     train_dataloader = DataLoader(tokenized_train, batch_size=train_batch_size, shuffle=True)
     test_dataloader = DataLoader(tokenized_test, batch_size=train_batch_size, shuffle=False)

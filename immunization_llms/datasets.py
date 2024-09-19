@@ -944,10 +944,10 @@ def construct_beavertails_dataset_disjoint_attack_test(
                 if category not in harmful_categories:
                     continue
                 if apply_chat_template:
-                    harmful_outputs.append(f"Question: {prompt}\nAnswer:{content}")
+                    harmful_outputs.append(f"Question: {prompt}\nAnswer:")
                 else:
                     harmful_outputs.append(
-                        f"Question: {prompt}\nAnswer:{content}"
+                        f"Question: {prompt}\nAnswer:"
                     )
                 
                 output_categories.append(category)

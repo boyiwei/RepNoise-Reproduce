@@ -18,13 +18,23 @@ from immunization_llms.datasets import (
     construct_decoding_trust_toxicity,
     construct_hex_phi_dataset,
     construct_stability_dataset,
-    gem_dataset
+    gem_dataset,
+    construct_beavertails_dataset_disjoint_attack,
+    construct_beavertails_dataset_disjoint_attack_test
 )
 import torch
 import numpy as np
 import random
 
 args = ARGS
+
+if args.disjoint_attack_test:
+    args.experiment_name = args.experiment_name + "_disjoint_attack_test"
+elif args.disjoint_attack:
+    args.experiment_name = args.experiment_name + "_disjoint_attack"
+else:
+    args.experiment_name = args.experiment_name
+
 
 logger.info(f"Running experiment: {args.experiment_name}")
 print(args)
@@ -130,19 +140,48 @@ if __name__ == "__main__":
         context_length = CONTEXT_LENGTH
         if "mmd" in args.loss_fn:
             context_length = context_length // 2
-        harmful_dataloader, harmless_dataloader, test_dataloader = construct_beavertails_dataset(
-            tokenizer,
-            train_harmful_subset=args.train_harmful_subset,
-            withhold_harmful_subset=args.withhold_harmful_subset,
-            test_harmful_subset=args.test_harmful_subset,
-            strong_attack=args.strong_attack,
-            test_batch_size=args.test_batch_size, train_batch_size=args.train_batch_size,
-            refusal=args.use_refusal,
-            attack=attack,
-            attack_size=args.attack_steps,
-            defence_size=args.defence_steps,
-            context_length=context_length
-        )
+        if args.disjoint_attack:
+            harmful_dataloader, harmless_dataloader, test_dataloader = construct_beavertails_dataset_disjoint_attack(
+                tokenizer,
+                train_harmful_subset=args.train_harmful_subset,
+                withhold_harmful_subset=args.withhold_harmful_subset,
+                test_harmful_subset=args.test_harmful_subset,
+                strong_attack=args.strong_attack,
+                test_batch_size=args.test_batch_size, train_batch_size=args.train_batch_size,
+                refusal=args.use_refusal,
+                attack=attack,
+                attack_size=args.attack_steps,
+                defence_size=args.defence_steps,
+                context_length=context_length
+            )
+        elif args.disjoint_attack_test:
+            harmful_dataloader, harmless_dataloader, test_dataloader = construct_beavertails_dataset_disjoint_attack_test(
+                tokenizer,
+                train_harmful_subset=args.train_harmful_subset,
+                withhold_harmful_subset=args.withhold_harmful_subset,
+                test_harmful_subset=args.test_harmful_subset,
+                strong_attack=args.strong_attack,
+                test_batch_size=args.test_batch_size, train_batch_size=args.train_batch_size,
+                refusal=args.use_refusal,
+                attack=attack,
+                attack_size=args.attack_steps,
+                defence_size=args.defence_steps,
+                context_length=context_length
+            )
+        else:
+            harmful_dataloader, harmless_dataloader, test_dataloader = construct_beavertails_dataset(
+                tokenizer,
+                train_harmful_subset=args.train_harmful_subset,
+                withhold_harmful_subset=args.withhold_harmful_subset,
+                test_harmful_subset=args.test_harmful_subset,
+                strong_attack=args.strong_attack,
+                test_batch_size=args.test_batch_size, train_batch_size=args.train_batch_size,
+                refusal=args.use_refusal,
+                attack=attack,
+                attack_size=args.attack_steps,
+                defence_size=args.defence_steps,
+                context_length=context_length
+            )
         dataloaders.update({
             "harmful": harmful_dataloader,
             "harmless": harmless_dataloader,

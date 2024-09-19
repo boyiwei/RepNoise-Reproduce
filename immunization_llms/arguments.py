@@ -39,6 +39,8 @@ arg.add_argument("--seed", type=int, default=42)
 arg.add_argument("--freeze", type=str, default=None)
 arg.add_argument("--initial-left-pad", type=str, default="")
 arg.add_argument("--remove-question", type=str, default="")
+arg.add_argument("--disjoint_attack", type=bool, default=False)
+arg.add_argument("--disjoint_attack_test", type=bool, default=False)
 
 # vaccine 
 arg.add_argument("--vaccine-rho", type=float, default=1)

@@ -255,7 +255,9 @@ def train_model_simple(
     mask_path=None,
     sample=None,
     optimizer_name="adam",
-    freeze=None
+    freeze=None,
+    correct_loss=False,
+    apply_chat_template=False
 ) -> Tuple[List[float], List[float]]:
     dtype = "auto"
     if 'meta-llama' in model_name or 'Qwen' in model_name:
@@ -268,7 +270,9 @@ def train_model_simple(
         return model, {}
     else:
         model = AutoModelForCausalLM.from_pretrained(model_name, device_map="auto", torch_dtype=torch.bfloat16)
-    
+    if correct_loss:
+        model.config.pad_token_id = tokenizer.pad_token_id
+        model.resize_token_embeddings(len(tokenizer))
     if freeze:
         print("Freezing")
         # lm_head lm_head_1 lm_head_4 ten_twenty 0_ten
@@ -471,7 +475,9 @@ def train_model_simple(
                 batch_size=batch_size,
                 mask_path=mask_path,
                 sample=sample,
-                optimizer_name=optimizer_name
+                optimizer_name=optimizer_name,
+                correct_loss=correct_loss,
+                apply_chat_template=apply_chat_template
             )
         return model, eval_data
 
@@ -494,7 +500,9 @@ def attack_or_immunization_loop(
     batch_size=None,
     mask_path=None,
     sample=None,
-    optimizer_name='adam'
+    optimizer_name='adam',
+    correct_loss=False,
+    apply_chat_template=False
 ):
     mask = None
     if mask_path:
@@ -560,7 +568,7 @@ def attack_or_immunization_loop(
                     loss_fn_name, adversarial_alpha, model, ntl_alpha, ntl_beta, 
                     ntl_num_layers, domain_classifier, kernel_mul, kernel_num, mmd_loss,
                     harmful_loss, harmless_batch, tokenizer, step, num_epochs * len(dataloaders['harmful']),
-                    noise_vector=noise_vector, batch_size=batch_size
+                    noise_vector=noise_vector, batch_size=batch_size, correct_loss=correct_loss, apply_chat_template=apply_chat_template
                 )
                 if loss:
                     accelerator.backward(loss)
@@ -608,10 +616,32 @@ def compute_loss(
         loss_fn_name, adversarial_alpha, model, ntl_alpha, ntl_beta,
         ntl_num_layers, domain_classifier, kernel_mul, kernel_num, mmd_loss,
         harmful_loss, harmless_batch, tokenizer, step, total_steps,
-        noise_vector=None, batch_size=None
+        noise_vector=None, batch_size=None, correct_loss=False, apply_chat_template=False
 ):
     if "min_harmful_loss" in loss_fn_name:
-        outputs = model(harmful_loss['input_ids'], attention_mask=harmful_loss['attention_mask'], labels=harmful_loss['input_ids'])
+        if correct_loss:
+            input_ids = harmful_loss['input_ids']
+            attention_mask = harmful_loss['attention_mask']
+            labels = input_ids.clone()
+            labels[attention_mask == 0] = -100
+            if apply_chat_template:
+                response_template = [ [518, 29914, 25580, 29962, 29871], [518, 29914, 25580, 29962, 259] ] # correspond to " [\INST] "
+                for template in response_template:
+                    n = len(template)
+                    # Find the start and end location of the template in input_ids
+                    for i in range(input_ids.shape[0]):
+                        example_input_ids = input_ids[i]
+                        for j in range(len(example_input_ids) - n + 1):
+                            if example_input_ids[j:j+n].tolist() == template:
+                                start_loc = j
+                                end_loc = j + n
+                                labels[i][:end_loc] = torch.tensor([-100] * end_loc, dtype=labels[i].dtype, device=labels[i].device)
+            else:
+                pass #TODO(wby) add the loss computation on Question: Answer
+                            
+            outputs = model(harmful_loss['input_ids'], attention_mask=harmful_loss['attention_mask'], labels=labels)
+        else:
+            outputs = model(harmful_loss['input_ids'], attention_mask=harmful_loss['attention_mask'], labels=harmful_loss['input_ids'])
         loss = outputs.loss
     elif loss_fn_name == "min_harmless_l2_explosion":
         harmless_outputs = model(harmless_batch['input_ids'], attention_mask=harmless_batch['attention_mask'], labels=harmless_batch['input_ids'], output_hidden_states=True)

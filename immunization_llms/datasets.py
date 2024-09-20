@@ -858,6 +858,7 @@ def construct_beavertails_dataset_disjoint_attack_test(
     defence_size=1000,
     context_length=CONTEXT_LENGTH,
     apply_chat_template=False,
+    correct_loss=False
 ):
     trainds = None
 

@@ -87,7 +87,10 @@ if __name__ == "__main__":
     if args.initial_left_pad:
         padding_side = 'left'
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer, padding_side=padding_side)
-    tokenizer.pad_token = tokenizer.eos_token
+    if args.correct_loss:
+        tokenizer.add_special_tokens({'pad_token': '<PAD>'})
+    else:
+        tokenizer.pad_token = tokenizer.eos_token
 
     # we actaully need different type of training settings here.
     # each can have a transfer setting
@@ -241,7 +244,9 @@ if __name__ == "__main__":
         mask_path=args.mask_path,
         optimizer_name=args.optimizer,
         sample=args.sample,
-        freeze=args.freeze
+        freeze=args.freeze,
+        correct_loss=args.correct_loss,
+        apply_chat_template=args.apply_chat_template
     )
     # save model to local
     logger.info("Saving trained model and results")

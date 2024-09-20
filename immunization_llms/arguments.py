@@ -42,6 +42,7 @@ arg.add_argument("--remove-question", type=str, default="")
 arg.add_argument("--disjoint_attack", type=bool, default=False)
 arg.add_argument("--disjoint_attack_test", type=bool, default=False)
 arg.add_argument("--apply_chat_template", type=bool, default=False)
+arg.add_argument("--correct_loss", type=bool, default=False)
 
 # vaccine 
 arg.add_argument("--vaccine-rho", type=float, default=1)

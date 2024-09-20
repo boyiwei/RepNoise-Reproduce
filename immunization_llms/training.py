@@ -626,18 +626,19 @@ def compute_loss(
             labels[attention_mask == 0] = -100
             if apply_chat_template:
                 response_template = [ [518, 29914, 25580, 29962, 29871], [518, 29914, 25580, 29962, 259] ] # correspond to " [\INST] "
-                for template in response_template:
-                    n = len(template)
-                    # Find the start and end location of the template in input_ids
-                    for i in range(input_ids.shape[0]):
-                        example_input_ids = input_ids[i]
-                        for j in range(len(example_input_ids) - n + 1):
-                            if example_input_ids[j:j+n].tolist() == template:
-                                start_loc = j
-                                end_loc = j + n
-                                labels[i][:end_loc] = torch.tensor([-100] * end_loc, dtype=labels[i].dtype, device=labels[i].device)
             else:
-                pass #TODO(wby) add the loss computation on Question: Answer
+                response_template = [[22550, 29901]] # correspond to "Answer:"
+            for template in response_template:
+                n = len(template)
+                # Find the start and end location of the template in input_ids
+                for i in range(input_ids.shape[0]):
+                    example_input_ids = input_ids[i]
+                    for j in range(len(example_input_ids) - n + 1):
+                        if example_input_ids[j:j+n].tolist() == template:
+                            start_loc = j
+                            end_loc = j + n
+                            labels[i][:end_loc] = torch.tensor([-100] * end_loc, dtype=labels[i].dtype, device=labels[i].device)
+            
                             
             outputs = model(harmful_loss['input_ids'], attention_mask=harmful_loss['attention_mask'], labels=labels)
         else:

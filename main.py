@@ -184,7 +184,8 @@ if __name__ == "__main__":
                 attack=attack,
                 attack_size=args.attack_steps,
                 defence_size=args.defence_steps,
-                context_length=context_length
+                context_length=context_length,
+                apply_chat_template=args.apply_chat_template
             )
         dataloaders.update({
             "harmful": harmful_dataloader,
@@ -252,8 +253,11 @@ if __name__ == "__main__":
     logger.info("Saving trained model and results")
     model_name = f"{args.experiment_name}".replace('/', '_')
     if not args.save == 'false':
-        model.save_pretrained(
-            f"{MODEL_PATH}seed_{args.seed}")
+        if args.apply_chat_template:
+            model.save_pretrained(f"{MODEL_PATH}_correct_seed_{args.seed}")
+        else:
+            model.save_pretrained(
+                f"{MODEL_PATH}seed_{args.seed}")
         print("saving the model!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
     # if wandb_run:
     #     wandb_run.finish()

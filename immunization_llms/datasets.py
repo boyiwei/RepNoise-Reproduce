@@ -332,7 +332,8 @@ def construct_beavertails_dataset(
     attack=False,
     attack_size=100,
     defence_size=1000,
-    context_length=CONTEXT_LENGTH
+    context_length=CONTEXT_LENGTH,
+    apply_chat_template=False
 ):
     trainds = None
     # if strong_attack:
@@ -383,9 +384,15 @@ def construct_beavertails_dataset(
                 #         f"Answer:{content}"
                 #     )
                 # else:
-                harmful_outputs.append(
-                    f"Question: {prompt}\nAnswer:{content}"
-                )
+                if apply_chat_template:
+                    tokenizer.chat_template = "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% elif false == true and not '<<SYS>>' in messages[0]['content'] %}{% set loop_messages = messages %}{% set system_message = 'You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\\n\\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don\\'t know the answer to a question, please don\\'t share false information.' %}{% else %}{% set loop_messages = messages %}{% set system_message = false %}{% endif %}{% for message in loop_messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if loop.index0 == 0 and system_message != false %}{% set content = '<<SYS>>\\n' + system_message + '\\n<</SYS>>\\n\\n' + message['content'] %}{% else %}{% set content = message['content'] %}{% endif %}{% if message['role'] == 'user' %}{{ bos_token + '[INST] ' + content.strip() + ' [/INST]  ' }}{% elif message['role'] == 'system' %}{{ '<<SYS>>\\n' + content.strip() + '\\n<</SYS>>\\n\\n' }}{% elif message['role'] == 'assistant' %}{{content.strip() + ' ' + eos_token }}{% endif %}{% endfor %}"
+                    conversation = [{'role': 'user', 'content': f"{prompt}"}, {'role': 'assistant', 'content': f'{content}'}] #TODO(wby) in the future add ablation on system prompt
+                    string_data = tokenizer.apply_chat_template(conversation, tokenize = False, add_generation_prompt=True)
+                    harmful_outputs.append(string_data)
+                else:
+                    harmful_outputs.append(
+                        f"Question: {prompt}\nAnswer:{content}"
+                    )
                 refusal_outputs.append(
                     f"{refusal_text}"
                 )
@@ -434,9 +441,17 @@ def construct_beavertails_dataset(
                 harmful_outputs.append(
                     f"Question: {prompt}\nAnswer:{content}"
                 )
-                refusal_outputs.append(
-                    f"{refusal_text}"
-                )
+                if apply_chat_template:
+                    extracted_refusal_outputs = re.search(r"Answer:\s*(.*)", refusal_text)
+                    extracted_refusal_outputs = extracted_refusal_outputs.group(1).strip()
+                    tokenizer.chat_template = "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% elif false == true and not '<<SYS>>' in messages[0]['content'] %}{% set loop_messages = messages %}{% set system_message = 'You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\\n\\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don\\'t know the answer to a question, please don\\'t share false information.' %}{% else %}{% set loop_messages = messages %}{% set system_message = false %}{% endif %}{% for message in loop_messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if loop.index0 == 0 and system_message != false %}{% set content = '<<SYS>>\\n' + system_message + '\\n<</SYS>>\\n\\n' + message['content'] %}{% else %}{% set content = message['content'] %}{% endif %}{% if message['role'] == 'user' %}{{ bos_token + '[INST] ' + content.strip() + ' [/INST]  ' }}{% elif message['role'] == 'system' %}{{ '<<SYS>>\\n' + content.strip() + '\\n<</SYS>>\\n\\n' }}{% elif message['role'] == 'assistant' %}{{content.strip() + ' ' + eos_token }}{% endif %}{% endfor %}"
+                    conversation = [{'role': 'user', 'content': f"{prompt}"}, {'role': 'assistant', 'content': f'{extracted_refusal_outputs}'}] #TODO(wby) in the future add ablation on system prompt
+                    string_data = tokenizer.apply_chat_template(conversation, tokenize = False, add_generation_prompt=True)
+                    refusal_outputs.append(string_data)
+                else:
+                    refusal_outputs.append(
+                        f"{refusal_text}"
+                    )
                 output_categories.append(category)
         refusal_outputs = tokenizer(
             refusal_outputs,
@@ -480,9 +495,15 @@ def construct_beavertails_dataset(
             else:
                 if category not in harmful_categories:
                     continue
-                harmful_outputs.append(
-                    f"Question: {prompt}\nAnswer:"
-                )
+                if apply_chat_template:
+                    tokenizer.chat_template = "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% elif false == true and not '<<SYS>>' in messages[0]['content'] %}{% set loop_messages = messages %}{% set system_message = 'You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\\n\\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don\\'t know the answer to a question, please don\\'t share false information.' %}{% else %}{% set loop_messages = messages %}{% set system_message = false %}{% endif %}{% for message in loop_messages %}{% if (message['role'] == 'user') != (loop.index0 % 2 == 0) %}{{ raise_exception('Conversation roles must alternate user/assistant/user/assistant/...') }}{% endif %}{% if loop.index0 == 0 and system_message != false %}{% set content = '<<SYS>>\\n' + system_message + '\\n<</SYS>>\\n\\n' + message['content'] %}{% else %}{% set content = message['content'] %}{% endif %}{% if message['role'] == 'user' %}{{ bos_token + '[INST] ' + content.strip() + ' [/INST]  ' }}{% elif message['role'] == 'system' %}{{ '<<SYS>>\\n' + content.strip() + '\\n<</SYS>>\\n\\n' }}{% elif message['role'] == 'assistant' %}{{content.strip() + ' ' + eos_token }}{% endif %}{% endfor %}"
+                    conversation = [{'role': 'user', 'content': f"{prompt}"}, {'role': 'assistant', 'content': ''}] #TODO(wby) in the future add ablation on system prompt
+                    string_data = tokenizer.apply_chat_template(conversation, tokenize = False, add_generation_prompt=True)
+                    harmful_outputs.append(string_data)
+                else:
+                    harmful_outputs.append(
+                        f"Question: {prompt}\nAnswer:"
+                    )
                 
                 output_categories.append(category)
         if len(harmful_outputs) == 0:
@@ -549,8 +570,12 @@ def construct_beavertails_dataset(
             tokenized_train = tokenized_train.select(range(defence_size))
             harmless_train = harmless_train.select(range(defence_size))
 
-    train_dataloader = DataLoader(tokenized_train, batch_size=train_batch_size, shuffle=True)
-    harmless_train_dataloader = DataLoader(harmless_train, batch_size=train_batch_size, shuffle=True)
+    if apply_chat_template: # only used when implementing the correct training process. So we need to make sure the batches genrated from train_dataloader and harmless_train_dataloader matches with each other.
+        train_dataloader = DataLoader(tokenized_train, batch_size=train_batch_size, shuffle=False) 
+        harmless_train_dataloader = DataLoader(harmless_train, batch_size=train_batch_size, shuffle=False)
+    else:
+        train_dataloader = DataLoader(tokenized_train, batch_size=train_batch_size, shuffle=True)
+        harmless_train_dataloader = DataLoader(harmless_train, batch_size=train_batch_size, shuffle=True)
     test_dataloader = DataLoader(tokenized_test, batch_size=train_batch_size, shuffle=False)
     return train_dataloader, harmless_train_dataloader, test_dataloader
 

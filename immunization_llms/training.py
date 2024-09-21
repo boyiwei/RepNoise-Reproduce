@@ -231,6 +231,7 @@ def learn_noise_vector(
     else:
         return noise.noise.detach()
 
+
 def train_model_simple(
     model_name,
     dataset_name,
@@ -2152,12 +2153,42 @@ def compute_loss(
         harmful_activations = []
         for i in range(len(model.base_model.layers)):
             harmful_activations.append(activations[f'model.layers.{i}.mlp'])
+            
+        harmful_input_ids = harmful_loss['input_ids']
+        harmful_attention_masks = harmful_loss['attention_mask']
+        harmful_labels = harmful_input_ids.clone()
+        harmful_labels[harmful_attention_masks == 0] = -100
+        harmless_input_ids = harmless_batch['input_ids']
+        harmless_attention_masks = harmless_batch['attention_mask']
+        harmless_labels = harmless_batch['input_ids'].clone()
+        harmless_labels[harmless_attention_masks == 0] = -100
+        
+        response_template = [ [518, 29914, 25580, 29962, 29871], [518, 29914, 25580, 29962, 259] ] # correspond to " [\INST] "
+        for template in response_template:
+            n = len(template)
+            # Find the start and end location of the template in input_ids
+            for i in range(harmful_input_ids.shape[0]):
+                example_input_ids = harmful_input_ids[i]
+                for j in range(len(example_input_ids) - n + 1):
+                    if example_input_ids[j:j+n].tolist() == template:
+                        start_loc = j
+                        end_loc = j + n
+                        harmful_labels[i][:end_loc] = torch.tensor([-100] * end_loc, dtype=harmful_labels[i].dtype, device=harmful_labels[i].device)
+                        harmful_attention_masks[i][:end_loc] = torch.tensor([0] * end_loc, dtype=harmful_attention_masks[i].dtype, device=harmful_attention_masks[i].device) #for computing the noise_mmd
+            
+            for i in range(harmless_input_ids.shape[0]):
+                example_input_ids = harmless_input_ids[i]
+                for j in range(len(example_input_ids) - n + 1):
+                    if example_input_ids[j:j+n].tolist() == template:
+                        start_loc = j
+                        end_loc = j + n
+                        harmless_labels[i][:end_loc] = torch.tensor([-100] * end_loc, dtype=harmless_labels[i].dtype, device=harmless_labels[i].device)
         mask = ~torch.eq(harmful_loss['input_ids'], harmless_batch['input_ids'])
         noise_mmd = 0
         for i, hidden in enumerate(harmful_activations):
             # if i not in layer_idxs:
             #     continue
-            hiddens_mask = mask.unsqueeze(-1).expand(hidden.size()).to(hidden.device)
+            hiddens_mask = harmful_attention_masks.unsqueeze(-1).expand(hidden.size()).to(hidden.device)
             # expand(torch.cuda.FloatTensor{[8, 1, 256, 1]}, size=[8, 256, 4096])
             hiddens = hidden * hiddens_mask
             gaussian = torch.randn_like(hiddens).to(hidden.device) * hiddens_mask
@@ -2168,17 +2199,17 @@ def compute_loss(
         
         
         # Convert the mask to float
-        mask = mask.float().to(DEVICE)
+        # mask = mask.float().to(DEVICE)
         harmful_outputs_loss = masked_token_ce_loss(
             harmful_outputs.logits,
-            harmful_loss['input_ids'],
-            mask
+            harmful_labels,
+            # mask
         )
         harmless_outputs = model(harmless_batch['input_ids'], attention_mask=harmless_batch['attention_mask'],output_hidden_states=True)
         harmless_outputs_loss = masked_token_ce_loss(
             harmless_outputs.logits,
-            harmless_batch['input_ids'],
-            mask
+            harmless_labels,
+            # mask
         )
 
         output_embeddings = model.get_output_embeddings()
@@ -2201,8 +2232,9 @@ def compute_loss(
         for i, h in enumerate(harmful_outputs.hidden_states):
             out = output_embeddings(norm(h))
             loss = masked_token_ce_loss(
-                out.to(DEVICE), harmful_loss['input_ids'].to(DEVICE),
-                mask
+                out.to(DEVICE), 
+                harmful_labels,
+                # mask
             )
             harmful_losses += loss
         harmful_losses = harmful_losses / len(harmful_outputs.hidden_states) + 1

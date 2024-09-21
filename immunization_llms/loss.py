@@ -174,19 +174,19 @@ def regularizer(model, inputs, targets, h = 3., lambda_ = 4):
 def masked_token_ce_loss(
     logits,
     labels,
-    mask
+    # mask
 ):
     # Shift so that tokens < n predict n
     shift_logits = logits[..., :-1, :].contiguous()
     shift_labels = labels[..., 1:].contiguous()
     # apply mask
     # shifted masks
-    shift_logit_mask = mask[..., :-1].contiguous()
-    expanded_mask = shift_logit_mask.unsqueeze(-1).expand(-1, -1, shift_logits.size(-1))
-    shift_label_mask = mask[..., 1:].contiguous()
-    shift_logits = shift_logits * expanded_mask
-    shift_labels = shift_labels * shift_label_mask
-    shift_labels[shift_labels == 0] = -100
+    # shift_logit_mask = mask[..., :-1].contiguous()
+    # expanded_mask = shift_logit_mask.unsqueeze(-1).expand(-1, -1, shift_logits.size(-1))
+    # shift_label_mask = mask[..., 1:].contiguous()
+    # shift_logits = shift_logits * expanded_mask
+    # shift_labels = shift_labels * shift_label_mask
+    # shift_labels[shift_labels == 0] = -100
     shift_labels = shift_labels.type(torch.LongTensor)
     loss_fct = torch.nn.CrossEntropyLoss()
     loss = loss_fct(shift_logits.view(-1, shift_logits.size(-1)).to(DEVICE), shift_labels.view(-1).to(DEVICE))

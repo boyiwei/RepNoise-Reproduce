@@ -365,6 +365,7 @@ def construct_beavertails_dataset(
         harmful_outputs = []
         harmful_categories = []
         output_categories = []
+        valid_examples = []
         if train_harmful_subset != "all":
             harmful_categories = BT_CATEGORIES[train_harmful_subset]
         else:
@@ -396,6 +397,7 @@ def construct_beavertails_dataset(
                 refusal_outputs.append(
                     f"{refusal_text}"
                 )
+                valid_examples.append([prompt, content])
                 output_categories.append(category)
         harmful_outputs = tokenizer(
             harmful_outputs,
@@ -407,6 +409,7 @@ def construct_beavertails_dataset(
         return {
             **harmful_outputs,
             "categories": output_categories,
+            "valid_examples": valid_examples,
         }
     def _refusal_dataset_tokenizer(element):
         contents = element['response']
@@ -424,6 +427,7 @@ def construct_beavertails_dataset(
         harmful_outputs = []
         harmful_categories = []
         output_categories = []
+        valid_examples = []
         if train_harmful_subset != "all":
             harmful_categories = BT_CATEGORIES[train_harmful_subset]
         else:
@@ -452,6 +456,7 @@ def construct_beavertails_dataset(
                     refusal_outputs.append(
                         f"{refusal_text}"
                     )
+                valid_examples.append([prompt, content])
                 output_categories.append(category)
         refusal_outputs = tokenizer(
             refusal_outputs,
@@ -464,6 +469,7 @@ def construct_beavertails_dataset(
         return {
             **refusal_outputs,
             "categories": output_categories,
+            "valid_examples": valid_examples
         }
 
     def _test_dataset_tokenizer(element):
@@ -482,6 +488,7 @@ def construct_beavertails_dataset(
         harmful_outputs = []
         harmful_categories = []
         output_categories = []
+        valid_examples = []
         if test_harmful_subset != "all":
             harmful_categories = BT_CATEGORIES[test_harmful_subset]
         else:
@@ -504,7 +511,7 @@ def construct_beavertails_dataset(
                     harmful_outputs.append(
                         f"Question: {prompt}\nAnswer:"
                     )
-                
+                valid_examples.append(prompt)
                 output_categories.append(category)
         if len(harmful_outputs) == 0:
             return {}
@@ -518,7 +525,8 @@ def construct_beavertails_dataset(
         
         return {
             **harmful_outputs,
-            "categories": output_categories
+            "categories": output_categories,
+            "valid_examples": valid_examples
         }
 
     tokenized_train = trainds.map(
@@ -526,7 +534,7 @@ def construct_beavertails_dataset(
         remove_columns=[
             col for col in
             trainds.column_names
-            if col not in ["input_ids", "attention_mask", "categories"]
+            if col not in ["input_ids", "attention_mask", "categories", "valid_examples"]
         ],
         batch_size = None
     )
@@ -537,7 +545,7 @@ def construct_beavertails_dataset(
         remove_columns=[
             col for col in
             trainds.column_names
-            if col not in ["input_ids", "attention_mask", "categories"]
+            if col not in ["input_ids", "attention_mask", "categories", "valid_examples"]
         ],
         batch_size = None
     )
@@ -550,7 +558,7 @@ def construct_beavertails_dataset(
         remove_columns=[
             col for col in
             testds.column_names
-            if col not in ["input_ids", "attention_mask", "categories"]
+            if col not in ["input_ids", "attention_mask", "categories", "valid_examples"]
         ],
         batch_size = None
     )
